@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *" />
+
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+    <title>Hello World</title>
+</head>
+
+<body>
+    <div class="app">
+        <h1>PhoneGap122669</h1>
+        <div id="deviceready" class="blink">
+            <p class="event listening">Connecting to Device</p>
+            <p class="event received">Device is Ready</p>
+            <input type="button" value="alert" id="alert"/><br/><br/>
+            <input type="button" value="confirm" id="confirm"/><br/><br/>
+            <input type="button" value="beep" id="beep"/><br/><br/>
+
+
+            <h1>Compass</h1>
+            <div id="compassDiv" style="width: 10px;height: 10px;background: red;"></div>
+            <input type="button" value="getCurrentHeading" id="getCurrentHeading"/><br/><br/>
+            <input type="button" value="watchHeading" id="watchHeading"/><br/><br/>
+            <input type="button" value="clearWatchHeading" id="clearWatchHeading"/><br/><br/>
+            <h1>Connection</h1>
+            <div id="connectionDiv"></div>
+
+
+            <h1>camera|capture</h1>
+            <input type="button" value="getPicture" id="getPicture"/><br/><br/>
+            <input type="button" value="captureVideo" id="captureVideo"/><br/><br/>
+            
+
+
+            <h1>accelerometer</h1>
+            <p id="showP">加载中……</p>
+            <input type="button" value="getCurrentAcceleraction" id="getCurrentAcceleraction"/><br/><br/>
+            <input type="button" value="watchAcceleration" id="watchAcceleration"/><br/><br/>
+            <input type="button" value="clearWatch" id="clearWatch"/><br/><br/>
+
+
+            <img src="" alt="" id="cameraImg">
+            <!-- controls开启控制句柄 -->
+            <video id="captureV" controls style="height: 400px;width: 150px;display: block"/><br/><br/>
+        </div>
+    </div>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript">
+        document.addEventListener('deviceready', function(){ //代表设备准备就绪
+            // alert("设备准备就绪")
+            
+            var compassDiv = document.getElementById("compassDiv");
+            var Compass = document.getElementById("getCurrentHeading");
+            Compass.onclick = function(){
+                function onSuccess(heading) {
+                    alert('Heading: ' + heading.magneticHeading);// 0-360 含小数
+                    compassDiv.style.webkitTransform="rotate("+heading.magneticHeading+"deg)"
+                };
+
+                function onError(error) {
+                    alert('CompassError: ', error.code);
+                };
+                    
+                navigator.compass.getCurrentHeading(onSuccess, onError);
+            }
+
+
+            var Compass0 = document.getElementById("watchHeading");
+            var watchID=null;
+            Compass0.onclick = function(){
+                function onSuccess(heading) {
+                    compassDiv.style.webkitTransform="rotate("+heading.magneticHeading+"deg)"
+                };
+
+                function onError(compassError) {
+                    alert('Compass error: ' + compassError.code);
+                };
+                    
+                var options = { frequency: 100 };		//每隔3秒更新一次
+                    
+                watchID = navigator.compass.watchHeading(onSuccess, onError, options);
+
+            }
+
+            var Compass1=document.getElementById('clearWatchHeading');
+            Compass1.onclick=function(){
+                navigator.compass.clearWatch(watchID);
+            }
+
+
+            var connectionDiv = document.getElementById("connectionDiv");
+            connectionDiv.innerHTML = 'WIFI:'+navigator.network.connection.type;
+
+            var b6 = document.getElementById("getPicture");
+            b6.onclick = function(){
+                alert("点击了");       
+                //getPicture 抓取摄像头
+                navigator.camera.getPicture(onSuccess, onFail, { 
+                    quality: 50 ,   //存储图像的质量，范围是[0,100]。（数字类型）
+                    destinationType : Camera.DestinationType.DATA_URL,  //照得照片的返回一个url类型的数据
+                    sourceType : Camera.PictureSourceType.CAMERA,   //设置图片从摄像头拍取 而不是从相册中获取
+                    allowEdit : true,   //设置拍完的照片可编辑
+                    encodingType : Camera.EncodingType.JPEG,
+                    targetWidth : 100,
+                    targetHeight : 100
+                });
+                function onSuccess(imageData) { //成功的回调
+                    var image = document.getElementById('cameraImg');
+                    image.src = "data:image/jpeg;base64," + imageData;  //处理返回结果为base64的图片
+                    // image.src = imageData;
+                }
+
+                function onFail(message) {  //失败的回调
+                    alert('Failed because: ' + message);
+                }
+            }
+
+            var b7 = document.getElementById("captureVideo");
+            var video1 = document.getElementById("captureV");
+            b7.onclick = function(){
+                // alert("点击了");
+                // 采集操作成功完成后的回调函数
+                var captureSuccess = function(mediaFiles) { //采集成功的数据是放在一个数组中的
+                    var i, path, len; 
+                    for (i = 0, len = mediaFiles.length; i < len; i += 1) { 	
+                        path = mediaFiles[i].fullPath;
+                        alert(path); 
+                        // 对文件进行感兴趣的操作
+                        video1.src=path
+                        video1.play()
+                    } 
+                }; 
+
+                // 采集操作出错后的回调函数 
+                var captureError = function(error) { 
+                    navigator.notification.alert('Error code: ' + error.code, null, 'Capture Error'); 
+                }; 
+
+                // 开始采集视频
+                navigator.device.capture.captureVideo(captureSuccess, captureError, {
+                    limit:1,    //限定返回一条数据
+                    duration:5  //限定只能拍摄5秒
+                });
+            }
+
+            var b8 = document.getElementById("clearWatch");
+            b8.onclick = function(){
+                alert("点击了")
+            }
+
+
+
+            var b0 = document.getElementById("alert");
+            b0.onclick = function(){
+                navigator.notification.alert("消息内容",function(){
+                    alert("执行结束的回调")
+                },"标题","确认")
+            }
+
+            var b1 = document.getElementById("confirm");
+            b1.onclick = function(){
+                navigator.notification.confirm("消息内容",function(){
+                    alert("取消执行结束的回调")
+                },"标题","确认,取消")
+            }
+
+            var b2 = document.getElementById("beep");
+            b2.onclick = function(){
+                navigator.notification.beep(1);
+            }
+
+
+
+
+
+            var b3 = document.getElementById("getCurrentAcceleraction");
+            var showP = document.getElementById("showP");
+            var watchA = null;
+            b3.onclick = function(){
+                alert("点击了");
+                showP.innerHTML = "点击了"
+                navigator.accelerometer.getCurrentAcceleration(function(acce){
+                    alert("成功回调")
+                    showP.innerHTML = "x:"+acce.x+"<br/>"+
+                    "y:"+acce.y+"<br/>"+
+                    "z:"+acce.z+"<br/>"
+                },function(){
+                    alert("失败回调")
+                })
+            }
+
+            var b4 = document.getElementById("watchAcceleration");
+            b4.onclick = function(){
+                // alert("点击了");
+                watchA = navigator.accelerometer.watchAcceleration(function(acce){
+                    // alert("成功回调")
+                    showP.innerHTML = "x:"+acce.x+"<br/>"+
+                    "y:"+acce.y+"<br/>"+
+                    "z:"+acce.z+"<br/>"
+                },function(){
+                    alert("失败回调")
+
+                },{
+                    frequency:500   //间隔多长时间更新一次
+                })
+            }
+
+            var b5 = document.getElementById("clearWatch");
+            b5.onclick = function(){
+                alert("点击了")
+                navigator.accelerometer.clearWatch(watchA);
+            }
+        }, false);
+    </script>
+</body>
+
+</html>
